@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-
+import json
 # Množina pro ukládání všech připojených klientů
 clients = set()
 
