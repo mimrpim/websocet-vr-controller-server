@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
     <meta charset="UTF-8">
     <title>WebSocket Klient</title>
 </head>
+
 <body>
     <h2>WebSocket Test</h2>
+    <input type="text" id="inputMsg" placeholder="IP..." value="localhost">
+    <input type="text" id="inputMsg" placeholder="Port..." value="8765">
+    <button onclick="connect()">Připojit se</button>
+    <br>
     <input type="text" id="inputMsg" placeholder="Napiš zprávu...">
     <button onclick="send()">Odeslat</button>
     <div id="log" style="margin-top: 15px; font-family: monospace;"></div>
 
     <script>
-        const ws = new WebSocket("ws://localhost:8765");
+        let ws;
 
-        ws.onopen = () => addLog("✅ Připojeno k serveru");
-        ws.onmessage = (event) => addLog("📩 Server: " + event.data);
-        ws.onclose = () => addLog("❌ Odpojeno od serveru");
+        function connect() {
+            ws = new WebSocket("ws://localhost:8765");
+
+            ws.onopen = () => addLog("✅ Připojeno k serveru");
+            ws.onmessage = (event) => addLog("📩 Server: " + event.data);
+            ws.onclose = () => addLog("❌ Odpojeno od serveru");
+        }
 
         function send() {
             const input = document.getElementById("inputMsg");
@@ -30,4 +40,5 @@
         }
     </script>
 </body>
+
 </html>
