@@ -28,9 +28,13 @@ async def handle_client(websocket):
 async def main():
     host = "0.0.0.0"  # Pro přístup z lokální sítě změň na "0.0.0.0"
     port = 8765
+    port2 = 8766
     
     async with websockets.serve(handle_client, host, port):
         print(f"🚀 WebSocket server běží na ws://{host}:{port}")
+        await asyncio.get_running_loop().create_future()  # Běží nepřetržitě
+    async with websockets.serve(handle_client, host, port2):
+        print(f"🚀 WebSocket server běží na ws://{host}:{port2}")
         await asyncio.get_running_loop().create_future()  # Běží nepřetržitě
 
 if __name__ == "__main__":
