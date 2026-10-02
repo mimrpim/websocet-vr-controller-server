@@ -1,0 +1,62 @@
+name: Python CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.14
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.14"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install websockets flake8 pytest
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Check syntax (compileall)
+      run: |
+        python -m compileall -q .
+
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    - name: Test WebSocket Server Integration
+      run: |
+        # 1. Spuštění serveru na pozadí
+        python server.py &
+        SERVER_PID=$!
+
+        # 2. Počkání 2 sekundy na nastartování serveru
+        sleep 2
+
+        # 3. Testovací WebSocket klient
+        python -c '
+        import asyncio
+        import websockets
+
+        async def test():
+            uri = "ws://127.0.0.1:8765"
+            async with websockets.connect(uri) as ws:
+                await ws.send("test_zprava")
+                response = await ws.recv()
+                print(f"Odpověď ze serveru: {response}")
+                assert response == "Server přijal: test_zprava", "Neodpovídá očekávané zprávě"
+                print("✅ Server funguje a přijímá zprávy!")
+
+        asyncio.run(test())
+        '
+
+        # 4. Ukončení serveru
+        kill $SERVER_PID
