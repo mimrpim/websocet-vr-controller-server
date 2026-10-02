@@ -26,15 +26,16 @@ jobs:
 
     - name: Lint with flake8
       run: |
-        # Zastaví sestavení při závažných syntaktických chybách nebo nedefinovaných proměnných
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Check Python syntax (compileall)
       run: |
-        # Zkontroluje úplně všechny Python soubory v projektu
         python -m compileall -q .
+
+    - name: Check server import
+      run: |
+        python -c "import server"
 
     - name: Test with pytest
       run: |
-        # Spustí pytest; pokud selže s exit kódem 5 (nenalezeny žádné testy), krok stejně projde
         pytest || [ $? -eq 5 ]
