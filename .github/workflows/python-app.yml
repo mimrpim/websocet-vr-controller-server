@@ -21,30 +21,42 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        pip install websockets flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install flake8 pylint mypy pytest
 
     - name: Check syntax (compileall)
       run: |
-        # Zkontroluje syntaktickou správnost bez spuštění kódu
         python -m compileall -q .
 
     - name: Lint with flake8
       run: |
-        # Odhalí nedefinované proměnné a hrubé chyby v syntaxi
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-    - name: Check logic with pylint
+    - name: Test WebSocket Server Integration
       run: |
-        # Hledá závažné chyby v logice serveru (E = Errors, F = Fatal)
-        pylint --disable=all --enable=E,F server.py
+        # 1. Spuštění serveru na pozadí
+        python server.py &
+        SERVER_PID=$!
 
-    - name: Type check with mypy
-      run: |
-        # Zkontroluje typovou správnost a neexistující importy
-        mypy server.py --ignore-missing-imports || true
+        # 2. Počkání 2 sekundy na nastartování serveru
+        sleep 2
 
-    - name: Test with pytest
-      run: |
-        # Projde bez chyby, i když zatím nemáte složku s testy
-        pytest || [ $? -eq 5 ]
+        # 3. Testovací WebSocket klient
+        python -c '
+        import asyncio
+        import websockets
+
+        async def test():
+            uri = "ws://127.0.0.1:8765"
+            async with websockets.connect(uri) as ws:
+                await ws.send("test_zprava")
+                response = await ws.recv()
+                print(f"Odpověď ze serveru: {response}")
+                assert response == "Server přijal: test_zprava", "Neodpovídá očekávané zprávě"
+                print("✅ Server funguje a přijímá zprávy!")
+
+        asyncio.run(test())
+        '
+
+        # 4. Ukončení serveru
+        kill $SERVER_PID
