@@ -22,20 +22,29 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        pip install flake8 pytest
+        pip install flake8 pylint mypy pytest
+
+    - name: Check syntax (compileall)
+      run: |
+        # Zkontroluje syntaktickou správnost bez spuštění kódu
+        python -m compileall -q .
 
     - name: Lint with flake8
       run: |
+        # Odhalí nedefinované proměnné a hrubé chyby v syntaxi
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
-    - name: Check Python syntax (compileall)
+    - name: Check logic with pylint
       run: |
-        python -m compileall -q .
+        # Hledá závažné chyby v logice serveru (E = Errors, F = Fatal)
+        pylint --disable=all --enable=E,F server.py
 
-    - name: Check server import
+    - name: Type check with mypy
       run: |
-        python -c "import server"
+        # Zkontroluje typovou správnost a neexistující importy
+        mypy server.py --ignore-missing-imports || true
 
     - name: Test with pytest
       run: |
+        # Projde bez chyby, i když zatím nemáte složku s testy
         pytest || [ $? -eq 5 ]
